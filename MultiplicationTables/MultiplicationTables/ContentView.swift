@@ -68,7 +68,7 @@ struct ContentView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 15))
                     
                     Button(isStarted ? "Stop the game" : "Start the game") {
-                        isStarted ? restart() : askQuestions()
+                        isStarted ? restart() : startGame()
                         withAnimation {
                             isStarted.toggle()
                         }
@@ -86,6 +86,7 @@ struct ContentView: View {
                         HStack{
                             Text("\(chosenTable) x \(question/chosenTable)")
                                 .font(.largeTitle)
+                                .foregroundColor(.white)
                         }
                         HStack{
                             ForEach(answer, id: \.self){ num in
@@ -100,29 +101,26 @@ struct ContentView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
                         }
+                        
+                        Text(isRight ? "Correct" : "Wrong")
+                            .foregroundColor(isRight ? .white : .orange)
+                            .font(.title2)
+                            .padding(20)
+                            .opacity(showResult ? 1 : 0)
                     }
                 } else {
                     Spacer()
                     Spacer()
                 }
                 
-                if showResult {
-                    Text(isRight ? "Correct" : "Wrong")
-                        .foregroundColor(isRight ? .white : .red)
-                        .font(.title2)
-                        .padding(20)
-                        .transition(.asymmetric(insertion: .scale, removal: .opacity))
-                        .animation(.easeOut, value: showResult)
-                }
                 Spacer()
-                
                 
             }
             .padding(.horizontal, 30)
             .padding()
             .alert(alertTitle, isPresented: $alertIsShowed) {
                 Button("Ok", role: .cancel){
-                    restart()
+                        restart()
                 }
             } message: {
                 Text(alertMessage)
@@ -135,21 +133,19 @@ struct ContentView: View {
     
     
     func nextQuestion(){
-        
-        withAnimation {
-            showResult = false
+
+        guard questionNumber <= numberOfQuestion else {
+            alertTitle = "Finish"
+            alertMessage = "Right answer \(rightAnswer) / \(numberOfQuestion)"
+            alertIsShowed = true
+            return
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7){
-            
             answer.removeAll()
             
-            guard questionNumber <= numberOfQuestion else {
-                alertTitle = "Finish"
-                alertMessage = "Right answer \(rightAnswer) / \(numberOfQuestion)"
-                alertIsShowed = true
-                isStarted = false
-                return
+            withAnimation {
+                showResult = false
             }
             
             questionNumber += 1
@@ -173,48 +169,46 @@ struct ContentView: View {
         }
     }
     
-    func askQuestions(){
+    func startGame(){
+        
+        answer.removeAll()
+        
+        questionNumber += 1
+        
+        question = chosenTable * Int.random(in: 2...maxValueTable)
+        
+        answer.append(question)
+        
+        while answer.count < 3 {
+            let randomValue = Int.random(in: 2...chosenTable * maxValueTable)
             
-            answer.removeAll()
-            
-            guard questionNumber <= numberOfQuestion else {
-                alertTitle = "Finish"
-                alertMessage = "Right answer \(rightAnswer) / \(numberOfQuestion)"
-                alertIsShowed = true
-                isStarted = false
-                return
+            if !answer.contains(randomValue){
+                answer.append(randomValue)
+            } else {
+                continue
             }
-            
-            questionNumber += 1
-            
-            question = chosenTable * Int.random(in: 2...maxValueTable)
-            answer.append(question)
-            while answer.count < 3 {
-                let randomValue = Int.random(in: 2...chosenTable * maxValueTable)
-                
-                if !answer.contains(randomValue){
-                    answer.append(randomValue)
-                } else {
-                    continue
-                }
-            }
-            
-            answer.shuffle()
-            
-            print(question)
-            print(answer)
+        }
+        
+        answer.shuffle()
+        
+        print(question)
+        print(answer)
         
     }
     
     func restart(){
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3){
+        withAnimation {
+            isStarted = false
+            showResult = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2){
             chosenTable = 2
             numberOfQuestion = 1
             questionNumber = 1
             question = 0
             rightAnswer = 0
             answer.removeAll()
-            showResult = false
+
         }
     }
     
@@ -223,14 +217,29 @@ struct ContentView: View {
         if question == answer {
             isRight = true
             rightAnswer += 1
-            showResult = true
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3){
+                withAnimation {
+                    showResult = true
+                }
+            }
+            
             DispatchQueue.main.asyncAfter(deadline: .now() + 1){
                 nextQuestion()
             }
             
         } else {
-            showResult = true
             isRight = false
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3){
+                withAnimation {
+                    showResult = true
+                }
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1){
+                nextQuestion()
+            }
         }
     }
     
