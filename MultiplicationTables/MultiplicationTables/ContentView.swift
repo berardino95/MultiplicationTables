@@ -51,7 +51,7 @@ struct ContentView: View {
                 Spacer()
                 VStack(spacing: 10){
                     
-                    Stepper("Table of: \(chosenTable)", value: $chosenTable, in: 2...maxValueTable)
+                    Stepper("Multiply by \(chosenTable)", value: $chosenTable, in: 2...maxValueTable)
                         .font(.title3)
                         .foregroundColor(.blue)
                         .padding(.vertical, 10)
@@ -69,9 +69,6 @@ struct ContentView: View {
                     
                     Button(isStarted ? "Stop the game" : "Start the game") {
                         isStarted ? restart() : startGame()
-                        withAnimation {
-                            isStarted.toggle()
-                        }
                     }
                     .frame(maxWidth: .infinity, minHeight: 50)
                     .background(isStarted ? .red : .white)
@@ -93,7 +90,6 @@ struct ContentView: View {
                                 Button("\(num)"){
                                     withAnimation {
                                         checkAnswer(question: question, answer: num)
-                                        //checkAnswer dopo aver fatto il controllo resetta showResult a false ma in quel caso l'animazione mi va a scatti
                                     }
                                 }
                                 .frame(width: 50, height: 50)
@@ -190,6 +186,11 @@ struct ContentView: View {
         }
         
         answer.shuffle()
+        
+        
+        withAnimation {
+            isStarted = true
+        }
         
         print(question)
         print(answer)
